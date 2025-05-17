@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>ฟอร์มแจ้งบริการ</title>
+</head>
+<body>
+  <h2>ฟอร์มแจ้งนัดหมายบริการ</h2>
+
+  <form id="serviceForm">
+    <label>ชื่อบริษัท:</label><br>
+    <input type="text" name="company" required><br><br>
+
+    <label>ชื่อผู้ติดต่อ:</label><br>
+    <input type="text" name="contact" required><br><br>
+
+    <label>เบอร์โทรศัพท์:</label><br>
+    <input type="tel" name="phone" required><br><br>
+
+    <label>ประเภทงาน:</label><br>
+    <input type="text" name="jobType" required><br><br>
+
+    <label>ลิงก์ Google Maps (ตำแหน่งหน้างาน):</label><br>
+    <input type="url" name="mapLink" id="mapLinkInput" required>
+    <button type="button" onclick="getCurrentLocation()">📍 ระบุตำแหน่งอัตโนมัติ</button>
+    <button type="button" onclick="openMap()">🗺️ เปิดดูตำแหน่ง</button><br><br>
+
+    <!-- mediaLink ตัดออกไปก่อน เพราะยังไม่ได้แนบไฟล์ -->
+    <label>รายละเอียดเพิ่มเติม:</label><br>
+    <textarea name="details" rows="4" cols="50"></textarea><br><br>
+
+    <button type="submit">ส่งข้อมูล</button>
+  </form>
+
+  <div id="responseMessage" style="margin-top: 20px; font-weight: bold;"></div>
+
+  <script>
+    function getCurrentLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const gmapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+          document.getElementById('mapLinkInput').value = gmapLink;
+        }, function (error) {
+          alert("❌ ไม่สามารถระบุตำแหน่งได้: " + error.message);
+        });
+      } else {
+        alert("❌ เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง");
+      }
+    }
+
+    function openMap() {
+      const link = document.getElementById("mapLinkInput").value;
+      if (link) {
+        window.open(link, "_blank");
+      } else {
+        alert("กรุณาวางลิงก์ Google Maps ก่อน");
+      }
+    }
+
+    const form = document.getElementById('serviceForm');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const data = {
+        company: form.company.value,
+        contact: form.contact.value,
+        phone: form.phone.value,
+        jobType: form.jobType.value,
+        mapLink: form.mapLink.value,
+        mediaLink: "", // ยังไม่รองรับไฟล์
+        details: form.details.value
+      };
+
+      fetch('https://script.google.com/macros/s/AKfycbzxRjrbCt5sKG7Qf-eqF0dAadekHrc0x3S0Vzq_fibpbdCz4IrcqtWPOohOvRCLzBn4qA/exec', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+        .then(res => res.text())
+        .then(msg => {
+          document.getElementById('responseMessage').innerText = msg;
+          form.reset();
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('responseMessage').innerText = "❌ มีบางอย่างผิดพลาด กรุณาลองใหม่";
+        });
+    });
+  </script>
+</body>
+</html>
